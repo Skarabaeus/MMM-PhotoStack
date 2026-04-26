@@ -6,6 +6,8 @@ var express = require("express");
 module.exports = NodeHelper.create({
   start() {
     this.registeredRoutes = new Set();
+    this.instances = {};
+    this.rescanTimers = {};
   },
 
   socketNotificationReceived(notification, payload) {
@@ -13,17 +15,45 @@ module.exports = NodeHelper.create({
     if (!payload || !payload.identifier) return;
 
     const identifier = payload.identifier;
+    this.instances[identifier] = payload;
+
+    const paths = Array.isArray(payload.paths) ? payload.paths : [];
+    for (let i = 0; i < paths.length; i++) {
+      const dir = paths[i];
+      if (!dir) continue;
+      const routeKey = identifier + "|" + i;
+      if (!this.registeredRoutes.has(routeKey)) {
+        let stat;
+        try { stat = fs.statSync(dir); } catch (e) { continue; }
+        if (!stat.isDirectory()) continue;
+        const routeBase = "/MMM-PhotoStack/photo/" + identifier + "/" + i;
+        this.expressApp.use(routeBase, express.static(dir));
+        this.registeredRoutes.add(routeKey);
+      }
+    }
+
+    this.scan(identifier);
+
+    const rescanInterval = payload.rescanInterval;
+    if (rescanInterval > 0) {
+      if (this.rescanTimers[identifier]) clearInterval(this.rescanTimers[identifier]);
+      this.rescanTimers[identifier] = setInterval(() => this.scan(identifier), rescanInterval);
+    }
+  },
+
+  scan(identifier) {
+    const payload = this.instances[identifier];
+    if (!payload) return;
+
     const paths = Array.isArray(payload.paths) ? payload.paths : [];
     const recursive = payload.recursive !== false;
     const extensions = (payload.extensions || []).map((e) => e.toLowerCase().replace(/^\./, ""));
     const randomize = payload.randomize !== false;
 
     const urls = [];
-
     for (let i = 0; i < paths.length; i++) {
       const dir = paths[i];
       if (!dir) continue;
-
       let stat;
       try {
         stat = fs.statSync(dir);
@@ -35,14 +65,7 @@ module.exports = NodeHelper.create({
         console.error("[MMM-PhotoStack] Path is not a directory: " + dir);
         continue;
       }
-
-      const routeKey = identifier + "|" + i;
       const routeBase = "/MMM-PhotoStack/photo/" + identifier + "/" + i;
-      if (!this.registeredRoutes.has(routeKey)) {
-        this.expressApp.use(routeBase, express.static(dir));
-        this.registeredRoutes.add(routeKey);
-      }
-
       const files = this.collectFiles(dir, dir, recursive, extensions);
       for (const rel of files) {
         const encoded = rel

@@ -12,7 +12,8 @@ Module.register("MMM-PhotoStack", {
     flyOutDuration: 800,
     recursiveSubDirectories: true,
     randomizeImageOrder: true,
-    imageExtensions: ["jpg", "jpeg", "png", "gif", "webp"]
+    imageExtensions: ["jpg", "jpeg", "png", "gif", "webp"],
+    rescanInterval: 0
   },
 
   start() {
@@ -27,7 +28,8 @@ Module.register("MMM-PhotoStack", {
       paths: this.config.imagePaths,
       recursive: this.config.recursiveSubDirectories,
       extensions: this.config.imageExtensions,
-      randomize: this.config.randomizeImageOrder
+      randomize: this.config.randomizeImageOrder,
+      rescanInterval: this.config.rescanInterval
     });
   },
 
@@ -51,11 +53,14 @@ Module.register("MMM-PhotoStack", {
   socketNotificationReceived(notification, payload) {
     if (notification !== "PHOTOSTACK_IMAGES") return;
     if (!payload || payload.identifier !== this.identifier) return;
+    const hadUrls = this.urls.length > 0;
     this.urls = payload.urls || [];
-    this.cursor = 0;
     if (this.urls.length === 0) return;
     if (!this.container) this.updateDom();
-    this.scheduleNextCard(true);
+    if (!hadUrls) {
+      this.cursor = 0;
+      this.scheduleNextCard(true);
+    }
   },
 
   scheduleNextCard(immediate) {

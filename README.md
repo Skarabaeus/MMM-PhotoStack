@@ -50,6 +50,30 @@ Add an entry to the `modules` array in your `config.js`:
 | `recursiveSubDirectories` | boolean | `true` | Whether to walk subdirectories of each entry in `imagePaths`. |
 | `randomizeImageOrder` | boolean | `true` | Whether to shuffle the image list before cycling through it. |
 | `imageExtensions` | array of strings | `["jpg","jpeg","png","gif","webp"]` | File extensions to include when scanning the image directories. |
+| `rescanInterval` | number | `0` | How often in milliseconds to rescan `imagePaths` for new or removed photos. `0` disables periodic rescanning (the default). |
+
+## Keeping photos up to date with Syncthing
+
+By default the module scans your photo directories once at startup. If you add photos while MagicMirror² is running they won't appear until the next restart — unless you set `rescanInterval`.
+
+A convenient way to add photos wirelessly without touching the Pi at all is [Syncthing](https://syncthing.net). Syncthing is free and open-source, runs well on Raspberry Pi, and has apps for Android, iOS, macOS, Windows, and Linux. You point it at a folder on the Pi and the same folder on your phone or laptop; when you drop photos into the folder on either device they sync automatically over your local network (or remotely if you want).
+
+**Quick setup:**
+
+1. Install Syncthing on the Pi:
+   ```
+   sudo apt install syncthing
+   sudo systemctl enable --now syncthing@pi
+   ```
+2. Open the Syncthing web UI at `http://pi.local:8384` and add a shared folder (e.g. `/home/pi/Photos`).
+3. Install Syncthing on your phone or laptop, pair the two devices, and accept the shared folder.
+4. Point `imagePaths` in your module config at that folder.
+5. Set `rescanInterval` so newly synced photos are picked up automatically:
+   ```js
+   rescanInterval: 3600000  // check for new photos every hour
+   ```
+
+After this, dropping a photo into the synced folder on your phone is all it takes — it will appear on the mirror within an hour (or sooner if you use a shorter interval).
 
 ## How it works
 
