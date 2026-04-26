@@ -1,0 +1,83 @@
+/* MMM-PhotoStack — polaroid-style photo stack with fly-in/fly-out animations */
+
+.photostack-container {
+  position: relative;
+  width: calc(var(--photo-width) + var(--frame-width) * 2 + 80px);
+  height: calc(var(--photo-width) * 0.75 + var(--frame-width) * 3.5 + 80px);
+  perspective: 1000px;
+}
+
+.photostack-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--frame-color);
+  padding: var(--frame-width);
+  padding-bottom: calc(var(--frame-width) * 2.5);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translate(
+      calc(-50% + var(--rest-x)),
+      calc(-50% + var(--rest-y))
+    )
+    rotate(var(--rest-rotate));
+  transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1.05);
+  will-change: transform;
+}
+
+.photostack-image {
+  display: block;
+  width: var(--photo-width);
+  height: calc(var(--photo-width) * 0.75);
+  object-fit: cover;
+}
+
+/* Fly-in: card sweeps from off-screen origin into its tilted resting pose. */
+@keyframes photostack-fly-in {
+  from {
+    transform: translate(
+        calc(-50% + var(--in-x)),
+        calc(-50% + var(--in-y))
+      )
+      rotate(0deg)
+      scale(1.1);
+  }
+  to {
+    transform: translate(
+        calc(-50% + var(--rest-x)),
+        calc(-50% + var(--rest-y))
+      )
+      rotate(var(--rest-rotate));
+  }
+}
+
+.photostack-card.photostack-fly-in {
+  animation: photostack-fly-in var(--fly-in-duration)
+    cubic-bezier(0.2, 0.8, 0.2, 1.05) both;
+}
+
+/* Fly-out: card falls down and fades when bumped from the stack. */
+@keyframes photostack-fly-out {
+  from {
+    transform: translate(
+        calc(-50% + var(--rest-x)),
+        calc(-50% + var(--rest-y))
+      )
+      rotate(var(--rest-rotate));
+    opacity: 1;
+  }
+  to {
+    transform: translate(
+        calc(-50% + var(--rest-x)),
+        calc(-50% + var(--rest-y) + 200px)
+      )
+      rotate(var(--rest-rotate));
+    opacity: 0;
+  }
+}
+
+.photostack-card.photostack-fly-out {
+  animation: photostack-fly-out var(--fly-out-duration) ease-in both;
+  pointer-events: none;
+}

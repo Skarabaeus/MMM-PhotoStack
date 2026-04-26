@@ -1,0 +1,20 @@
+{
+  "name": "mmm-photostack",
+  "version": "1.0.0",
+  "description": "MagicMirror² module that displays photos as a polaroid-style stack with fly-in animations.",
+  "main": "MMM-PhotoStack.js",
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stefansiebel/MMM-PhotoStack.git"
+  },
+  "keywords": ["magicmirror", "magicmirror2", "module", "photos", "slideshow", "polaroid"],
+  "author": "Stefan Siebel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stefansiebel/MMM-PhotoStack/issues"
+  },
+  "homepage": "https://github.com/stefansiebel/MMM-PhotoStack#readme"
+}
