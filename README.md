@@ -4,9 +4,7 @@ A MagicMirror² module that displays your photos as a stack of overlapping, slig
 
 ## Screenshot
 
-![Screenshot](docs/screenshot.png)
-
-Screenshot pending.
+![Screenshot](docs/mmm-photostack-screen.png)
 
 ## Installation
 
