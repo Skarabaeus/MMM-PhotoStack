@@ -6,6 +6,7 @@ Module.register("MMM-PhotoStack", {
     maxRotation: 8,
     maxOffset: 30,
     frameColor: "white",
+    backgroundColor: "black",
     frameWidth: 16,
     photoWidth: 400,
     flyInDuration: 1200,
@@ -44,6 +45,7 @@ Module.register("MMM-PhotoStack", {
       this.container.style.setProperty("--photo-width", this.config.photoWidth + "px");
       this.container.style.setProperty("--frame-width", this.config.frameWidth + "px");
       this.container.style.setProperty("--frame-color", this.config.frameColor);
+      this.container.style.setProperty("--background-color", this.config.backgroundColor);
       this.container.style.setProperty("--fly-in-duration", this.config.flyInDuration + "ms");
       this.container.style.setProperty("--fly-out-duration", this.config.flyOutDuration + "ms");
     }

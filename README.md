@@ -41,6 +41,7 @@ Add an entry to the `modules` array in your `config.js`:
 | `maxRotation` | number | `8` | Maximum rotation in degrees applied to each card (plus or minus). |
 | `maxOffset` | number | `30` | Maximum positional jitter in pixels for each card's rest position (plus or minus). |
 | `frameColor` | string | `"white"` | Any valid CSS color for the polaroid frame. |
+| `backgroundColor` | string | `"black"` | Any valid CSS color for the module background. |
 | `frameWidth` | number | `16` | Width of the polaroid frame in pixels. |
 | `photoWidth` | number | `400` | Width of each photo in pixels. |
 | `flyInDuration` | number | `1200` | Duration in milliseconds of the fly-in animation for new cards. |

@@ -2,6 +2,7 @@
 
 .photostack-container {
   position: relative;
+  background-color: var(--background-color, black);
   width: calc(var(--photo-width) + var(--frame-width) * 2 + 80px);
   height: calc(var(--photo-width) * 0.75 + var(--frame-width) * 3.5 + 80px);
   perspective: 1000px;
