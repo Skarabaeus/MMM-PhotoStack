@@ -10,7 +10,7 @@ A MagicMirror² module that displays your photos as a stack of overlapping, slig
 
 ```
 cd ~/MagicMirror/modules
-git clone https://github.com/stefansiebel/MMM-PhotoStack.git
+git clone https://github.com/Skarabaeus/MMM-PhotoStack.git
 ```
 
 No `npm install` is required. The module has no runtime dependencies beyond what MagicMirror² itself provides.
