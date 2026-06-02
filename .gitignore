@@ -2,3 +2,6 @@ node_modules/
 *.log
 .DS_Store
 docs/screenshot.png.tmp
+.claude/
+CLAUDE.md
+openspec/
