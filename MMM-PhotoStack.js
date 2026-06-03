@@ -86,6 +86,39 @@ Module.register("MMM-PhotoStack", {
     return { width, height };
   },
 
+  // Largest photo box for a known image aspect ratio whose card — at full
+  // rotation and offset — still fits the viewport. This beats the global
+  // computePhotoBox() cap because it uses the photo's actual aspect ratio
+  // instead of assuming the worst-case (viewport-shaped) photo, so typical
+  // landscape/portrait photos fill far more of the screen.
+  fitPhotoToViewport(aspect) {
+    const frame = this.config.frameWidth;
+    const theta = (this.config.maxRotation * Math.PI) / 180;
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+    const offset = this.config.maxOffset;
+
+    // Span available for the card's rotated bounding box after reserving offset jitter.
+    const Bw = window.innerWidth - 2 * offset;
+    const Bh = window.innerHeight - 2 * offset;
+
+    // card = photo + chrome: cardW = w + 2*frame, cardH = w/aspect + 3.5*frame.
+    // Solve each rotated-bbox constraint for the photo width w:
+    //   cardW*cos + cardH*sin <= Bw
+    //   cardW*sin + cardH*cos <= Bh
+    const wFromWidth = (Bw - frame * (2 * cos + 3.5 * sin)) / (cos + sin / aspect);
+    const wFromHeight = (Bh - frame * (2 * sin + 3.5 * cos)) / (sin + cos / aspect);
+    let width = Math.min(wFromWidth, wFromHeight);
+
+    // Honor explicit caps (preserving aspect ratio).
+    if (this.config.photoWidth != null) width = Math.min(width, this.config.photoWidth);
+    if (this.config.photoHeight != null) width = Math.min(width, this.config.photoHeight * aspect);
+
+    width = Math.max(1, Math.floor(width));
+    const height = Math.max(1, Math.floor(width / aspect));
+    return { width, height };
+  },
+
   socketNotificationReceived(notification, payload) {
     if (notification !== "PHOTOSTACK_IMAGES") return;
     if (!payload || payload.identifier !== this.identifier) return;
@@ -145,8 +178,18 @@ Module.register("MMM-PhotoStack", {
 
     const img = document.createElement("img");
     img.className = "photostack-image";
-    img.src = url;
     img.alt = "";
+    const sizeImg = () => {
+      const aspect = img.naturalWidth && img.naturalHeight
+        ? img.naturalWidth / img.naturalHeight
+        : window.innerWidth / window.innerHeight;
+      const box = this.fitPhotoToViewport(aspect);
+      img.style.maxWidth = box.width + "px";
+      img.style.maxHeight = box.height + "px";
+    };
+    img.addEventListener("load", sizeImg, { once: true });
+    img.src = url;
+    if (img.complete && img.naturalWidth) sizeImg();
     card.appendChild(img);
 
     for (const existing of this.cards) {

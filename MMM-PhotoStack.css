@@ -3,10 +3,9 @@
 .photostack-container {
   position: relative;
   background-color: var(--background-color, black);
-  width: calc(var(--photo-width) + var(--frame-width) * 2 + 80px);
-  height: calc(var(--photo-height) + var(--frame-width) * 3.5 + 80px);
+  width: 100%;
+  height: 100vh;
   perspective: 1000px;
-  margin: 0 auto;
 }
 
 .photostack-card {
