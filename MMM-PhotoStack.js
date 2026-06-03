@@ -47,31 +47,6 @@ Module.register("MMM-PhotoStack", {
         this.resume();
       }
     });
-
-    // TEMP DEBUG: document-wide capture of every animation/transition. Our card
-    // events are already logged separately, so skip photostack-card targets.
-    // This reveals whether some OTHER element (module wrapper, region, an
-    // MMM-pages / MMM-PageSwipe element) animates the whole stack at the glitch.
-    const _cls = (t) => {
-      if (!t) return "?";
-      if (typeof t.className === "string" && t.className) return t.className;
-      return (t.id ? "#" + t.id : "") + "<" + (t.nodeName || "?") + ">";
-    };
-    document.addEventListener("animationstart", (e) => {
-      const c = _cls(e.target);
-      if (c.indexOf("photostack-card") !== -1) return;
-      this.sendSocketNotification("PHOTOSTACK_LOG", {
-        ev: "doc-anim", cls: c, anim: e.animationName, t: new Date().toISOString()
-      });
-    }, true);
-    document.addEventListener("transitionstart", (e) => {
-      const c = _cls(e.target);
-      if (c.indexOf("photostack-card") !== -1) return;
-      if (!/module|region|page|swipe|photostack-container/i.test(c)) return;
-      this.sendSocketNotification("PHOTOSTACK_LOG", {
-        ev: "doc-trans", cls: c, prop: e.propertyName, t: new Date().toISOString()
-      });
-    }, true);
   },
 
   getStyles() {
@@ -91,6 +66,14 @@ Module.register("MMM-PhotoStack", {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
+    }
+    // Settle any in-flight card immediately. While hidden the browser freezes
+    // the fly-in animation without firing animationend, so the card would keep
+    // the photostack-fly-in class and replay its entrance when the module is
+    // shown again. Stripping the class now pins it to its rest pose instead.
+    if (this.container) {
+      const flying = this.container.querySelectorAll(".photostack-card.photostack-fly-in");
+      for (const el of flying) el.classList.remove("photostack-fly-in");
     }
   },
 
@@ -229,25 +212,6 @@ Module.register("MMM-PhotoStack", {
   addCard() {
     if (!this.container || this.urls.length === 0) return;
 
-    // TEMP DEBUG: capture timing + DOM state of each card insertion.
-    const _now = Date.now();
-    const _domCards = this.container.querySelectorAll(".photostack-card").length;
-    const _flyIn = this.container.querySelectorAll(".photostack-card.photostack-fly-in").length;
-    this.sendSocketNotification("PHOTOSTACK_LOG", {
-      ev: "addCard",
-      t: new Date(_now).toISOString(),
-      sinceLastMs: this._lastAdd ? _now - this._lastAdd : -1,
-      cursor: this.cursor,
-      cards: this.cards.length,
-      domCards: _domCards,
-      flyIn: _flyIn,
-      vis: document.visibilityState
-    });
-    this._lastAdd = _now;
-    this._cardSeq = (this._cardSeq || 0) + 1;
-    const _cardId = this._cardSeq;
-    const _born = _now;
-
     const url = this.urls[this.cursor % this.urls.length];
     this.cursor = (this.cursor + 1) % this.urls.length;
 
@@ -298,23 +262,18 @@ Module.register("MMM-PhotoStack", {
     this.container.appendChild(card);
     this.cards.push({ element: card });
 
-    // TEMP DEBUG: report every animation (re)start/end with the card's age, so a
-    // burst shows up as a cluster of animationstart events on OLD cards.
-    card.addEventListener("animationstart", (e) => {
-      this.sendSocketNotification("PHOTOSTACK_LOG", {
-        ev: "animationstart", id: _cardId, ageMs: Date.now() - _born,
-        anim: e.animationName, t: new Date().toISOString()
-      });
-    });
+    // Settle the card into its rest pose by stripping the fly-in class. Drive
+    // this from a timer rather than relying solely on animationend: that event
+    // is dropped if the page is hidden or the compositor evicts the layer while
+    // the animation runs, and a card that keeps the class re-runs its fly-in on
+    // the next recomposite. Several such cards replay at once and look like a
+    // whole stack sliding in. The timeout is the authoritative removal;
+    // animationend just settles it a touch sooner in the common case.
+    const settle = () => card.classList.remove("photostack-fly-in");
     card.addEventListener("animationend", (e) => {
-      this.sendSocketNotification("PHOTOSTACK_LOG", {
-        ev: "animationend", id: _cardId, ageMs: Date.now() - _born,
-        anim: e.animationName, t: new Date().toISOString()
-      });
-      if (e.animationName === "photostack-fly-in") {
-        card.classList.remove("photostack-fly-in");
-      }
+      if (e.animationName === "photostack-fly-in") settle();
     });
+    setTimeout(settle, this.config.flyInDuration + 50);
 
     while (this.cards.length > this.config.stackSize) {
       const oldest = this.cards.shift();
