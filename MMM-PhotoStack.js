@@ -204,21 +204,24 @@ Module.register("MMM-PhotoStack", {
   addCard() {
     if (!this.container || this.urls.length === 0) return;
 
-    // TEMP DEBUG: capture timing of each card insertion. sinceLastMs near 0 ==
-    // the timer is bursting; sinceLastMs ~= speed but cards arriving together ==
-    // animation replay after a render freeze. Remove once diagnosed.
+    // TEMP DEBUG: capture timing + DOM state of each card insertion.
     const _now = Date.now();
+    const _domCards = this.container.querySelectorAll(".photostack-card").length;
+    const _flyIn = this.container.querySelectorAll(".photostack-card.photostack-fly-in").length;
     this.sendSocketNotification("PHOTOSTACK_LOG", {
-      identifier: this.identifier,
+      ev: "addCard",
       t: new Date(_now).toISOString(),
       sinceLastMs: this._lastAdd ? _now - this._lastAdd : -1,
       cursor: this.cursor,
-      urls: this.urls.length,
       cards: this.cards.length,
-      vis: document.visibilityState,
-      hidden: document.hidden
+      domCards: _domCards,
+      flyIn: _flyIn,
+      vis: document.visibilityState
     });
     this._lastAdd = _now;
+    this._cardSeq = (this._cardSeq || 0) + 1;
+    const _cardId = this._cardSeq;
+    const _born = _now;
 
     const url = this.urls[this.cursor % this.urls.length];
     this.cursor = (this.cursor + 1) % this.urls.length;
@@ -270,9 +273,23 @@ Module.register("MMM-PhotoStack", {
     this.container.appendChild(card);
     this.cards.push({ element: card });
 
-    card.addEventListener("animationend", () => {
-      card.classList.remove("photostack-fly-in");
-    }, { once: true });
+    // TEMP DEBUG: report every animation (re)start/end with the card's age, so a
+    // burst shows up as a cluster of animationstart events on OLD cards.
+    card.addEventListener("animationstart", (e) => {
+      this.sendSocketNotification("PHOTOSTACK_LOG", {
+        ev: "animationstart", id: _cardId, ageMs: Date.now() - _born,
+        anim: e.animationName, t: new Date().toISOString()
+      });
+    });
+    card.addEventListener("animationend", (e) => {
+      this.sendSocketNotification("PHOTOSTACK_LOG", {
+        ev: "animationend", id: _cardId, ageMs: Date.now() - _born,
+        anim: e.animationName, t: new Date().toISOString()
+      });
+      if (e.animationName === "photostack-fly-in") {
+        card.classList.remove("photostack-fly-in");
+      }
+    });
 
     while (this.cards.length > this.config.stackSize) {
       const oldest = this.cards.shift();
