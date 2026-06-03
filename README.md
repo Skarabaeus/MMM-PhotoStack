@@ -43,8 +43,8 @@ Add an entry to the `modules` array in your `config.js`:
 | `frameColor` | string | `"white"` | Any valid CSS color for the polaroid frame. |
 | `backgroundColor` | string | `"black"` | Any valid CSS color for the module background. |
 | `frameWidth` | number | `16` | Width of the polaroid frame in pixels. |
-| `photoWidth` | number | `400` | Width of each photo in pixels. |
-| `photoHeight` | number | `600` | Height of the photo area in pixels. Controls the container height and accommodates portrait images at their natural aspect ratio. Set to `300` to restore the old 4:3 container footprint if you only have landscape photos. |
+| `photoWidth` | number | screen width | Width of each photo in pixels. Defaults to the screen's native width so photos fill the display in a typical full-screen MagicMirror² setup. |
+| `photoHeight` | number | screen height | Height of the photo area in pixels. Controls the container height and accommodates portrait images at their natural aspect ratio. Defaults to the screen's native height. |
 | `flyInDuration` | number | `1200` | Duration in milliseconds of the fly-in animation for new cards. |
 | `flyOutDuration` | number | `800` | Duration in milliseconds of the fly-out animation for cards leaving the stack. |
 | `recursiveSubDirectories` | boolean | `true` | Whether to walk subdirectories of each entry in `imagePaths`. |

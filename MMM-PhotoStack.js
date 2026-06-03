@@ -8,8 +8,8 @@ Module.register("MMM-PhotoStack", {
     frameColor: "white",
     backgroundColor: "black",
     frameWidth: 16,
-    photoWidth: 400,
-    photoHeight: 600,
+    photoWidth: null,
+    photoHeight: null,
     flyInDuration: 1200,
     flyOutDuration: 800,
     recursiveSubDirectories: true,
@@ -43,8 +43,10 @@ Module.register("MMM-PhotoStack", {
     if (!this.container) {
       this.container = document.createElement("div");
       this.container.className = "photostack-container";
-      this.container.style.setProperty("--photo-width", this.config.photoWidth + "px");
-      this.container.style.setProperty("--photo-height", this.config.photoHeight + "px");
+      const photoWidth = this.config.photoWidth ?? window.screen.width;
+      const photoHeight = this.config.photoHeight ?? window.screen.height;
+      this.container.style.setProperty("--photo-width", photoWidth + "px");
+      this.container.style.setProperty("--photo-height", photoHeight + "px");
       this.container.style.setProperty("--frame-width", this.config.frameWidth + "px");
       this.container.style.setProperty("--frame-color", this.config.frameColor);
       this.container.style.setProperty("--background-color", this.config.backgroundColor);
@@ -128,9 +130,9 @@ Module.register("MMM-PhotoStack", {
     this.container.appendChild(card);
     this.cards.push({ element: card });
 
-    setTimeout(() => {
+    card.addEventListener("animationend", () => {
       card.classList.remove("photostack-fly-in");
-    }, this.config.flyInDuration);
+    }, { once: true });
 
     while (this.cards.length > this.config.stackSize) {
       const oldest = this.cards.shift();

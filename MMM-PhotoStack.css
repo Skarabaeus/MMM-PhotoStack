@@ -24,7 +24,6 @@
       calc(-50% + var(--rest-y))
     )
     rotate(var(--rest-rotate));
-  transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1.05);
   will-change: transform;
 }
 
