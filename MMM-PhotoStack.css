@@ -29,7 +29,10 @@
 
 .photostack-image {
   display: block;
-  width: var(--photo-width);
+  width: auto;
+  height: auto;
+  max-width: var(--photo-width);
+  max-height: var(--photo-height);
 }
 
 /* Fly-in: card sweeps from off-screen origin into its tilted resting pose. */

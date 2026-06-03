@@ -43,10 +43,9 @@ Module.register("MMM-PhotoStack", {
     if (!this.container) {
       this.container = document.createElement("div");
       this.container.className = "photostack-container";
-      const photoWidth = this.config.photoWidth ?? window.screen.width;
-      const photoHeight = this.config.photoHeight ?? window.screen.height;
-      this.container.style.setProperty("--photo-width", photoWidth + "px");
-      this.container.style.setProperty("--photo-height", photoHeight + "px");
+      const box = this.computePhotoBox();
+      this.container.style.setProperty("--photo-width", box.width + "px");
+      this.container.style.setProperty("--photo-height", box.height + "px");
       this.container.style.setProperty("--frame-width", this.config.frameWidth + "px");
       this.container.style.setProperty("--frame-color", this.config.frameColor);
       this.container.style.setProperty("--background-color", this.config.backgroundColor);
@@ -54,6 +53,37 @@ Module.register("MMM-PhotoStack", {
       this.container.style.setProperty("--fly-out-duration", this.config.flyOutDuration + "ms");
     }
     return this.container;
+  },
+
+  // Largest photo box whose worst-case card — at full rotation and offset —
+  // still fits the viewport. Honors explicit photoWidth/photoHeight as caps.
+  computePhotoBox() {
+    const frame = this.config.frameWidth;
+    // Card chrome around the photo: frame on all sides, 2.5x frame at the bottom.
+    const chromeW = frame * 2;
+    const chromeH = frame * 3.5;
+
+    if (this.config.photoWidth != null && this.config.photoHeight != null) {
+      return { width: this.config.photoWidth, height: this.config.photoHeight };
+    }
+
+    const theta = (this.config.maxRotation * Math.PI) / 180;
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+    const offset = this.config.maxOffset;
+
+    // Budget for offset jitter (both sides) and the container's own chrome.
+    const Aw = window.innerWidth - 2 * offset - 80;
+    const Ah = window.innerHeight - 2 * offset - 80;
+    const r = window.innerHeight / window.innerWidth; // target box aspect = viewport
+
+    // Rotated bounding box of cardW x (r*cardW) must fit Aw x Ah.
+    const cardW = Math.min(Aw / (cos + r * sin), Ah / (sin + r * cos));
+    const cardH = r * cardW;
+
+    const width = this.config.photoWidth ?? Math.max(1, Math.round(cardW - chromeW));
+    const height = this.config.photoHeight ?? Math.max(1, Math.round(cardH - chromeH));
+    return { width, height };
   },
 
   socketNotificationReceived(notification, payload) {
