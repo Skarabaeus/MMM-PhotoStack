@@ -11,6 +11,12 @@ module.exports = NodeHelper.create({
   },
 
   socketNotificationReceived(notification, payload) {
+    // TEMP DEBUG: front-end timing of card insertions, printed to MM² stdout
+    // (terminal / pm2 logs). Remove once the burst is diagnosed.
+    if (notification === "PHOTOSTACK_LOG") {
+      console.log("[MMM-PhotoStack][addCard] " + JSON.stringify(payload));
+      return;
+    }
     if (notification !== "PHOTOSTACK_REGISTER") return;
     if (!payload || !payload.identifier) return;
 

@@ -204,6 +204,22 @@ Module.register("MMM-PhotoStack", {
   addCard() {
     if (!this.container || this.urls.length === 0) return;
 
+    // TEMP DEBUG: capture timing of each card insertion. sinceLastMs near 0 ==
+    // the timer is bursting; sinceLastMs ~= speed but cards arriving together ==
+    // animation replay after a render freeze. Remove once diagnosed.
+    const _now = Date.now();
+    this.sendSocketNotification("PHOTOSTACK_LOG", {
+      identifier: this.identifier,
+      t: new Date(_now).toISOString(),
+      sinceLastMs: this._lastAdd ? _now - this._lastAdd : -1,
+      cursor: this.cursor,
+      urls: this.urls.length,
+      cards: this.cards.length,
+      vis: document.visibilityState,
+      hidden: document.hidden
+    });
+    this._lastAdd = _now;
+
     const url = this.urls[this.cursor % this.urls.length];
     this.cursor = (this.cursor + 1) % this.urls.length;
 
