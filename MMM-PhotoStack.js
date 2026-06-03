@@ -9,6 +9,7 @@ Module.register("MMM-PhotoStack", {
     backgroundColor: "black",
     frameWidth: 16,
     photoWidth: 400,
+    photoHeight: 600,
     flyInDuration: 1200,
     flyOutDuration: 800,
     recursiveSubDirectories: true,
@@ -43,6 +44,7 @@ Module.register("MMM-PhotoStack", {
       this.container = document.createElement("div");
       this.container.className = "photostack-container";
       this.container.style.setProperty("--photo-width", this.config.photoWidth + "px");
+      this.container.style.setProperty("--photo-height", this.config.photoHeight + "px");
       this.container.style.setProperty("--frame-width", this.config.frameWidth + "px");
       this.container.style.setProperty("--frame-color", this.config.frameColor);
       this.container.style.setProperty("--background-color", this.config.backgroundColor);
