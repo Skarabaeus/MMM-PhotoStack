@@ -33,10 +33,41 @@ Module.register("MMM-PhotoStack", {
       randomize: this.config.randomizeImageOrder,
       rescanInterval: this.config.rescanInterval
     });
+
+    // The browser freezes CSS animations whenever the document is hidden
+    // (screen blanking / DPMS, window focus loss, occlusion) — independent of
+    // MM²'s hide/show. Pause the timer in that case too, otherwise cards keep
+    // appending unseen and all replay their fly-in at once when the document
+    // becomes visible again.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        this.suspend();
+      } else {
+        this.resume();
+      }
+    });
   },
 
   getStyles() {
     return ["MMM-PhotoStack.css"];
+  },
+
+  // MM² hides this module (e.g. MMM-pages switching away) by setting the
+  // wrapper to display:none. CSS animations don't run while hidden, so a card
+  // appended during that time never fires animationend and never settles.
+  // Stop the timer while suspended so cards don't pile up and then all fly in
+  // at once when the module is shown again.
+  suspend() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+  },
+
+  resume() {
+    if (this.urls && this.urls.length > 0 && !this.timer) {
+      this.scheduleNextCard(false);
+    }
   },
 
   getDom() {
