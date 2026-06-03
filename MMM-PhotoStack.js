@@ -23,6 +23,7 @@ Module.register("MMM-PhotoStack", {
     this.cursor = 0;
     this.cards = [];
     this.timer = null;
+    this.rafId = null;
     this.registered = false;
 
     this.sendSocketNotification("PHOTOSTACK_REGISTER", {
@@ -61,6 +62,10 @@ Module.register("MMM-PhotoStack", {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
+    }
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
     }
   },
 
@@ -168,16 +173,31 @@ Module.register("MMM-PhotoStack", {
       clearTimeout(this.timer);
       this.timer = null;
     }
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
     if (!this.urls || this.urls.length === 0) return;
     const delay = immediate ? 0 : this.config.speed;
     this.timer = setTimeout(() => {
       this.timer = null;
-      if (!this.container) {
+      // Defer the actual card insertion to the next animation frame. setTimeout
+      // keeps firing even when the physical display is asleep/blanked (DPMS) —
+      // a state that does NOT set document.hidden and does NOT trigger MM²'s
+      // suspend() — but requestAnimationFrame does not fire while the page isn't
+      // painting. Without this, a card would be appended on every tick during
+      // sleep, then all of them would replay their fly-in at once on wake.
+      // Chaining the next schedule from inside the rAF callback keeps the whole
+      // cadence paused (at most one pending frame) until painting resumes.
+      this.rafId = requestAnimationFrame(() => {
+        this.rafId = null;
+        if (!this.container) {
+          this.scheduleNextCard(false);
+          return;
+        }
+        this.addCard();
         this.scheduleNextCard(false);
-        return;
-      }
-      this.addCard();
-      this.scheduleNextCard(false);
+      });
     }, delay);
   },
 
