@@ -47,6 +47,31 @@ Module.register("MMM-PhotoStack", {
         this.resume();
       }
     });
+
+    // TEMP DEBUG: document-wide capture of every animation/transition. Our card
+    // events are already logged separately, so skip photostack-card targets.
+    // This reveals whether some OTHER element (module wrapper, region, an
+    // MMM-pages / MMM-PageSwipe element) animates the whole stack at the glitch.
+    const _cls = (t) => {
+      if (!t) return "?";
+      if (typeof t.className === "string" && t.className) return t.className;
+      return (t.id ? "#" + t.id : "") + "<" + (t.nodeName || "?") + ">";
+    };
+    document.addEventListener("animationstart", (e) => {
+      const c = _cls(e.target);
+      if (c.indexOf("photostack-card") !== -1) return;
+      this.sendSocketNotification("PHOTOSTACK_LOG", {
+        ev: "doc-anim", cls: c, anim: e.animationName, t: new Date().toISOString()
+      });
+    }, true);
+    document.addEventListener("transitionstart", (e) => {
+      const c = _cls(e.target);
+      if (c.indexOf("photostack-card") !== -1) return;
+      if (!/module|region|page|swipe|photostack-container/i.test(c)) return;
+      this.sendSocketNotification("PHOTOSTACK_LOG", {
+        ev: "doc-trans", cls: c, prop: e.propertyName, t: new Date().toISOString()
+      });
+    }, true);
   },
 
   getStyles() {
